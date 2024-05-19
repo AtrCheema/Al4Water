@@ -473,8 +473,7 @@ class Learner(AttributeContainer):
 
             batch_loss += loss.detach().item()
 
-            if self.verbosity>1:
-                print(f"\rEpoch: {self.epoch}, batch: {i}, loss: {round(batch_loss/(i+1),3)}", end='', flush=True)
+            self.log_after_batch(i, batch_loss)
 
             self.optimizer.step()
             self.optimizer.zero_grad()
@@ -489,6 +488,11 @@ class Learner(AttributeContainer):
         # take the mean for all mini-batches without considering infinite values
         self.train_epoch_losses = {k: round(float(np.mean(np.array(v)[np.isfinite(v)])), 4) for k, v in epoch_losses.items()}
 
+        return
+
+    def log_after_batch(self, batch:int, batch_loss):
+        if self.verbosity>1:
+            print(f"\rEpoch: {self.epoch}, batch: {batch}, loss: {round(batch_loss/(batch+1),3)}", end='', flush=True)
         return
 
     def validate_for_epoch(self):
