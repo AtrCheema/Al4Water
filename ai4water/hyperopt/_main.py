@@ -269,10 +269,10 @@ class HyperOpt(object):
         self.gpmin_results = None  #
         self.data = None
         self.eval_on_best = eval_on_best
+        self.verbosity = verbosity
         self.opt_path = opt_path
         self._process_results = process_results
         self.objective_fn_is_dl = False
-        self.verbosity = verbosity
 
         self.gpmin_args = self.check_args(**kwargs)
 
@@ -530,9 +530,9 @@ Backend must be one of hyperopt, optuna or sklearn but is is {x}"""
     def opt_path(self, path):
         if path is None:
             path = os.path.join(os.getcwd(), f"results{SEP}" + self.title)
-            if not os.path.exists(path):
+            if self.verbosity>=0 and not os.path.exists(path):
                 os.makedirs(path)
-        elif not os.path.exists(path):
+        elif self.verbosity>=0 and not os.path.exists(path):
             os.makedirs(path)
 
         self._opt_path = path
@@ -605,10 +605,11 @@ Backend must be one of hyperopt, optuna or sklearn but is is {x}"""
                                           with backend {self.backend}""")
         res = fit_fn(*args, **kwargs)
 
-        serialized = self.serialize()
-        fname = os.path.join(self.opt_path, 'serialized.json')
-        with open(fname, 'w') as fp:
-            json.dump(serialized, fp, sort_keys=True, indent=4, cls=JsonEncoder)
+        if self.verbosity>=0:
+            serialized = self.serialize()
+            fname = os.path.join(self.opt_path, 'serialized.json')
+            with open(fname, 'w') as fp:
+                json.dump(serialized, fp, sort_keys=True, indent=4, cls=JsonEncoder)
 
         return res
 
@@ -653,12 +654,15 @@ Backend must be one of hyperopt, optuna or sklearn but is is {x}"""
         """kws are the keyword arguments to user objective function
         by the user
         """
+        kwargs = self.gpmin_args
+
         if self.algorithm == "bayes":
             minimize_func = SKOPT.gp_minimize
         else: # bayes_rf
             minimize_func = SKOPT.forest_minimize
+            kwargs['base_estimator'] = kwargs.get('base_estimator', 'RF')
 
-        kwargs = self.gpmin_args
+        
         if 'num_iterations' in kwargs:
             kwargs['n_calls'] = kwargs.pop('num_iterations')
 
@@ -872,8 +876,9 @@ Backend must be one of hyperopt, optuna or sklearn but is is {x}"""
                              trials=trials,
                              **model_kws)
 
-        with open(os.path.join(self.opt_path, 'trials.json'), "w") as fp:
-            json.dump(jsonize(trials.trials), fp, sort_keys=True, indent=4, cls=JsonEncoder)
+        if self.verbosity > 0:
+            with open(os.path.join(self.opt_path, 'trials.json'), "w") as fp:
+                json.dump(jsonize(trials.trials), fp, sort_keys=True, indent=4, cls=JsonEncoder)
 
         setattr(self, 'trials', trials)
         # self.results = trials.results

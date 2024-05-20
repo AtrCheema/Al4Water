@@ -917,6 +917,7 @@ class _RandomForestClassifier(object):
             self.space[-1] = Categorical(categories=['sqrt', 'log2'], name="max_features")
             self.x0[-1] = "sqrt"
 
+
 class _RandomForestRegressor(object):
     def __init__(self, num_samples):
         import sklearn
@@ -934,6 +935,7 @@ class _RandomForestRegressor(object):
         if sklearn.__version__ > "1.1.0":  # auto is deprecated
             self.space[-1] = Categorical(categories=['sqrt', 'log2'], name="max_features")
             self.x0[-1] = "sqrt"
+
 
 def lgbm_num_leaves(num_samples:int = None):
     if num_samples and num_samples > 1000:

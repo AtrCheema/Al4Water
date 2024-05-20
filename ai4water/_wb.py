@@ -126,7 +126,7 @@ class WB:
             for k, v in history.items():
                 
                 # check if all values are not nan
-                if np.all(np.isnan(v)):
+                if not np.all(np.isnan(v)):
                     self.wb_run_.log({f"{k}_{prefix}": v})
 
         return

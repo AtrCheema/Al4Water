@@ -12,7 +12,7 @@ else:
     long_desc = "https://github.com/AtrCheema/AI4Water"
 
 
-skopt_version = "scikit-optimize >= 0.7.0, <= 0.9.1"
+skopt_version = "scikit-optimize >= 0.7.0, <= 0.10.0"
 seq_met_ver = 'SeqMetrics>=1.3.3'
 easy_mpl_ver = 'easy_mpl[all]>=0.21.4'
 sklearn_ver = "scikit-learn >=0.23.0, <= 1.3.1"
