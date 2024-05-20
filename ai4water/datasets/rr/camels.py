@@ -412,7 +412,7 @@ class Camels(Datasets):
                 dyn = self._read_dynamic_from_csv(stations, dynamic_features, st=st, en=en)
 
             else:
-                dyn = xr.load_dataset(self.dyn_fname)  # daataset
+                dyn = xr.open_dataset(self.dyn_fname)  # daataset
                 dyn = dyn[stations].sel(dynamic_features=dynamic_features, time=slice(st, en))
                 if as_dataframe:
                     dyn = dyn.to_dataframe(['time', 'dynamic_features'])

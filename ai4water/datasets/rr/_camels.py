@@ -412,7 +412,9 @@ class CAMELS_US(Camels):
 class CAMELS_GB(Camels):
     """
     This is a dataset of 671 catchments with 290 static features
-    and 10 dyanmic features for each catchment. The dyanmic features are
+    and 10 dyanmic features for each catchment following the work of
+    `Coxon et al., 2020 <https://doi.org/10.5194/essd-12-2459-2020>`_.
+    The dyanmic features are
     timeseries from 1957-01-01 to 2018-12-31. This dataset must be manually
     downloaded by the user. The path of the downloaded folder must be provided
     while initiating this class.
@@ -611,11 +613,7 @@ class CAMELS_GB(Camels):
         for stn_id in stations:
             # making one separate dataframe for one station
             path = os.path.join(self.path, f"data{SEP}timeseries")
-            fname = None
-            for f in os.listdir(path):
-                if stn_id in f:
-                    fname = f
-                    break
+            fname = f"CAMELS_GB_hydromet_timeseries_{stn_id}_19701001-20150930.csv"
 
             df = pd.read_csv(os.path.join(path, fname), index_col='date')
             df.index = pd.to_datetime(df.index)
@@ -1399,7 +1397,8 @@ class CAMELS_CL(Camels):
 
 class CAMELS_CH(Camels):
     """
-    Rainfall runoff dataset of Swiss catchments. It consists of 331 catchments.
+    Rainfall runoff dataset of Swiss catchments. It consists of 331 catchments
+    `Hoege et al., 2023 <https://doi.org/10.5194/essd-15-5755-2023>` .
 
     Examples
     ---------
