@@ -523,6 +523,7 @@ class CAMELS_GB(Camels):
 
         return gauge_ids
 
+    @property
     def _mmd_feature_name(self) ->str:
         return 'discharge_spec'
 
@@ -1195,6 +1196,7 @@ class CAMELS_CL(Camels):
         df = pd.read_csv(path, sep='\t', index_col='gauge_id')
         return df.index.to_list()
 
+    @property
     def _mmd_feature_name(self) ->str:
         return 'streamflow_mm'
 

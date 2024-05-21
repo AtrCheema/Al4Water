@@ -611,7 +611,7 @@ class Learner(AttributeContainer):
         setattr(self, 'history', History())
 
         if self.use_wb:
-            self.wb_run_.log_loss_curve(History())
+            self.wb_run_.log_loss_curve(History().history)
             #self.wb_run_.finish()
 
         return History()

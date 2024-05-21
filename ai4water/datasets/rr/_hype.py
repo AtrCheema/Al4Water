@@ -152,6 +152,7 @@ class HYPE(Camels):
 
         return stns_dfs
 
+    @property
     def _mmd_feature_name(self) ->str:
         return 'Streamflow_mm'
 
