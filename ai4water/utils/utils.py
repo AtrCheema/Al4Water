@@ -1748,6 +1748,11 @@ num_inputs {num_inputs} + num_outputs {num_outputs} != total features {features}
         prev_y.append(np.array(y_data))
         y.append(np.array(target))
 
+    if len(x)<1:
+        raise ValueError(f"""
+        no examples generated from data of shape {data.shape} with lookback 
+        {lookback} input_steps {input_steps} forecast_step {forecast_step} forecast_len {forecast_len}
+""")
     x = np.stack(x)
     prev_y = np.array([np.array(i, dtype=np.float32) for i in prev_y], dtype=np.float32)
     # transpose because we want labels to be of shape (examples, outs, forecast_len)

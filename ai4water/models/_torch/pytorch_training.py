@@ -17,9 +17,9 @@ except ModuleNotFoundError:
 
 # only so that docs can be built without having torch to be installed
 try:
-    from .utils import to_torch_dataset, TorchMetrics
+    from .utils import to_torch_dataset
 except ModuleNotFoundError:
-    to_torch_dataset, TorchMetrics = None, None
+    to_torch_dataset = None
 
 if torch is not None:
     from .pytorch_attributes import LOSSES
@@ -479,10 +479,10 @@ class Learner(AttributeContainer):
             self.optimizer.zero_grad()
 
             # calculate metrics for each mini-batch
-            er = TorchMetrics(batch_y, pred_y)
+            er = RegressionMetrics(batch_y.detach().numpy(), pred_y.detach().numpy())
 
             for loss in epoch_losses.keys():
-                epoch_losses[loss].append(getattr(er, loss)().detach().item())
+                epoch_losses[loss].append(getattr(er, loss)())
             # epoch_losses['mse'][i] = loss.detach()
 
         # take the mean for all mini-batches without considering infinite values
@@ -506,11 +506,11 @@ class Learner(AttributeContainer):
 
                 batch_y, pred_y = self.eval(batch_x, batch_y)
 
-                # calculate metrics for each mini-batch
-                er = TorchMetrics(batch_y, pred_y)
+                # calculate metrics for each mini-batch  # todo : is detach.numpy expensive?
+                er = RegressionMetrics(batch_y.detach().numpy(), pred_y.detach().numpy())
 
                 for metric in epoch_losses.keys():
-                    epoch_losses[metric].append(getattr(er, metric)().detach().item())
+                    epoch_losses[metric].append(getattr(er, metric)())
 
             # take the mean for all mini-batches
             self.val_epoch_losses = {f'val_{k}': round(float(np.nanmean(v)), 4) for k, v in epoch_losses.items()}
@@ -640,6 +640,9 @@ class Learner(AttributeContainer):
 
         if best_weights is not None:
             # fpath = os.path.splitext(weight_file_path)[0]  # we are not saving the whole model but only state_dict
+            kwargs = {}
+            if not self.use_cuda:  # if the saved model was trained with cuda but we want to load it on cpu
+                kwargs['map_location'] = torch.device('cpu')            
             self.model.load_state_dict(torch.load(weight_file_path))
             if self.verbosity > 0:
                 print("{} Successfully loaded weights from {} file {}".format('*' * 10, best_weights, '*' * 10))

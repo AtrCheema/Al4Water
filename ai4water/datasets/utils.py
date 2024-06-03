@@ -201,7 +201,7 @@ def check_attributes(attributes, check_against: list, attribute_name:str = '') -
     if attributes == 'all' or attributes is None:
         attributes = check_against
     elif not isinstance(attributes, list):
-        assert isinstance(attributes, str)
+        assert isinstance(attributes, str), f"unknown type {type(attributes)} for {attribute_name}"
         assert attributes in check_against
         attributes = [attributes]
     else:
