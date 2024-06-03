@@ -127,7 +127,10 @@ class WB:
                 
                 # check if all values are not nan
                 if not np.all(np.isnan(v)):
-                    self.wb_run_.log({f"{k}_{prefix}": v})
+                    try:
+                        self.wb_run_.log({f"{k}_{prefix}": v})
+                    except Exception as e:
+                        print(f"Error in logging {k} on wb. Error: {e}")
 
         return
     
