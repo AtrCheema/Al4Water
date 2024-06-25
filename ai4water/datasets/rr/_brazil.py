@@ -497,7 +497,7 @@ class CABra(Camels):
                                       f'cabra_{met_src}_dyn.nc')
 
         if to_netcdf:
-            self._maybe_to_netcdf(f'cabra_{met_src}_dyn.nc')
+            self._maybe_to_netcdf(f'cabra_{met_src}_dyn')
 
     @property
     def q_path(self):
@@ -541,7 +541,7 @@ class CABra(Camels):
 
     @property
     def start(self)->pd.Timestamp:
-        return pd.Timestamp("1980-10-02")
+        return pd.Timestamp("1980-10-01")
 
     @property
     def end(self)->pd.Timestamp:
@@ -950,7 +950,7 @@ class CABra(Camels):
         q_fpath = os.path.join(self.q_path, f"CABra_{stn_id}_streamflow.txt")
 
         df = pd.read_csv(q_fpath, sep='\t',
-                         header=9,
+                         header=8,
                          names=['Year', 'Month', 'Day', 'Streamflow', 'Quality'],
                          dtype={'Year': int,
                                 'Month': int,

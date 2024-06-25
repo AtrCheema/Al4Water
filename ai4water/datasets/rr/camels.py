@@ -348,7 +348,7 @@ class Camels(Datasets):
 
     def fetch_stations_features(
             self,
-            stations: list,
+            stations: Union[str, List[str]],
             dynamic_features='all',
             static_features=None,
             st=None,

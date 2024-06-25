@@ -827,7 +827,7 @@ class CAMELS_AUS(Camels):
 
     @property
     def start(self):
-        return "19570101"
+        return "19500101"
 
     @property
     def end(self):
@@ -1818,7 +1818,7 @@ class CAMELS_CH(Camels):
         stations = check_attributes(stations, self.stations())
 
         dyn = {
-            stn: self._read_dynamic_for_stn(stn).loc["19990101": "20201231", attributes] for stn in stations
+            stn: self._read_dynamic_for_stn(stn).loc["19810101": "20201231", attributes] for stn in stations
         }
 
         return dyn

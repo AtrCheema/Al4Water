@@ -20,7 +20,7 @@ from ai4water.datasets import CAMELS_GB, CAMELS_BR, CAMELS_AUS
 from ai4water.datasets import CAMELS_CL, CAMELS_US, LamaH, HYSETS, HYPE
 from ai4water.datasets import WaterBenchIowa
 
-gscad_path = '/mnt/datawaha/hyex/atr/gscad/'
+gscad_path = 'Z:\\atr\\gscad_database\\raw'
 
 def test_dynamic_data(dataset, stations, num_stations, stn_data_len, as_dataframe=False):
     print(f"test_dynamic_data for {dataset.name}")
@@ -208,9 +208,9 @@ def test_selected_dynamic_features(dataset):
 
 
 def test_hysets():
-    hy = HYSETS(path=r'G:\data\gscad\HYSETS')
+    hy = HYSETS(path=os.path.join(gscad_path, "HYSETS"))
 
-    # because it takes very long time, we dont test with all the data
+    # because it takes very long time, we don't test with all the data
     test_dynamic_data(hy, 0.003, int(14425 * 0.003), 25202)
 
     test_static_data(hy, None, 14425)
@@ -367,7 +367,7 @@ def test_dataset(dataset, num_stations, dyn_data_len, num_static_attrs, num_dyn_
 class TestCamels(unittest.TestCase):
 
     def test_gb(self):
-        path = r"G:\data\gscad\CAMELS\CAMELS_GB"
+        path = os.path.join(gscad_path, 'CAMELS', "CAMELS_GB")
         if os.path.exists(path):
             ds_gb = CAMELS_GB(path=path)
             test_dataset(ds_gb, 671, 16436, 290, 10)
@@ -375,16 +375,16 @@ class TestCamels(unittest.TestCase):
 
     def test_aus(self):
         ds_aus = CAMELS_AUS(path=os.path.join(gscad_path, 'CAMELS', 'CAMELS_AUS'))
-        test_dataset(ds_aus, 222, 21184, 161, 26)
+        test_dataset(ds_aus, 222, 23376, 161, 26)
         return
 
     def test_hype(self):
-        ds_hype = HYPE(path=r'G:\data\gscad\CAMELS\HYPE')
+        ds_hype = HYPE(path=os.path.join(gscad_path, 'HYPE'))
         test_dataset(ds_hype, 564, 12783, 0, 9)
         return
 
     def test_cl(self):
-        ds_cl = CAMELS_CL(r'G:\data\gscad\CAMELS\CAMELS_CL')
+        ds_cl = CAMELS_CL(os.path.join(gscad_path, 'CAMELS', 'CAMELS_CL'))
         test_dataset(ds_cl, num_stations=516, dyn_data_len=38374,
                      num_static_attrs=104, num_dyn_attrs=12)
         return
@@ -406,7 +406,7 @@ class TestCamels(unittest.TestCase):
                     print(f'checking for {dt} at {ts} time step')
 
                     ds_eu = LamaH(time_step=ts, data_type=dt,
-                                  path=r'G:\data\gscad\CAMELS\LamaH')
+                                  path=os.path.join(gscad_path, 'LamaH'))
 
                     if ts =='hourly':
                         test_df=False
@@ -417,14 +417,14 @@ class TestCamels(unittest.TestCase):
         return
 
     def test_br(self):
-        ds_br = CAMELS_BR(path=r'G:\data\gscad\CAMELS\CAMELS_BR')
+        ds_br = CAMELS_BR(path=os.path.join(gscad_path, 'CAMELS', 'CAMELS_BR'))
         test_dataset(ds_br, 593, 14245, 67, 12)
         return
 
     def test_cabra(self):
         for source in ['era5', 'ref', 'ens']:
-            dataset = CABra(path=os.path.join(gscad_path, 'CAMELS', 'CABra'), met_src=source)
-            test_dataset(dataset, 735, 10956, 97, 12)
+            dataset = CABra(path=os.path.join(gscad_path, 'CABra'), met_src=source)
+            test_dataset(dataset, 735, 10957, 97, 12)
         return
 
     def test_us(self):
@@ -438,12 +438,12 @@ class TestCamels(unittest.TestCase):
         return
 
     def test_ccam(self):
-        ccam = CCAM(path=os.path.join(gscad_path, 'CAMELS', 'CCAM'))
+        ccam = CCAM(path=os.path.join(gscad_path, 'CCAM'))
         test_dataset(ccam, 102, 8035, 124, 16)
         return
 
     def test_ccam_meteo(self):
-        dataset = CCAM(path=os.path.join(gscad_path, 'CAMELS', 'CCAM'))
+        dataset = CCAM(path=os.path.join(gscad_path, 'CCAM'))
 
         stations = os.listdir(dataset.meteo_path)
 
@@ -500,7 +500,7 @@ class TestCamels(unittest.TestCase):
 
     def test_camels_ch(self):
         ds_swiss = CAMELS_CH(path=os.path.join(gscad_path, 'CAMELS', 'CAMELS_CH'))
-        test_dataset(ds_swiss, 331, 8036, 209, 9)
+        test_dataset(ds_swiss, 331, 14610, 209, 9)
         return
 
     def test_camels_dk_docs(self):
