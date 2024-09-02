@@ -29,13 +29,22 @@ else:
 
 F = {
     'mse': [np.nanmin, np.less],
+    'mae': [np.nanmin, np.less],
     'nse': [np.nanmax, np.greater],
+    'nse_alpha': [np.nanmax, np.greater],
+    'nse_beta': [np.nanmax, np.greater],
+    'nse_mod': [np.nanmax, np.greater],
+    'nse_rel': [np.nanmax, np.greater],
+    'nse_bound': [np.nanmax, np.greater],
     'r2': [np.nanmax, np.greater],
     'pbias': [np.nanmin, np.less],
     'mape': [np.nanmin, np.less],
     'rmse': [np.nanmin, np.less],
     'nrmse': [np.nanmin, np.less],
     'kge': [np.nanmax, np.greater],
+    'kge_mod': [np.nanmax, np.greater],
+    'kge_bound': [np.nanmax, np.greater],
+    'kge_np': [np.nanmax, np.greater],
 }
 
 
@@ -216,6 +225,8 @@ class Learner(AttributeContainer):
         self.max_time = max_time
         self.start_time = time.time()
 
+        self.avg_fn = np.nanmean
+
     def _use_wb(self):
         return self.wandb_config is not None and wandb is not None
 
@@ -265,6 +276,8 @@ class Learner(AttributeContainer):
         self.on_train_begin(x, y=y, validation_data=validation_data, **kwargs)
 
         for epoch in range(self.num_epochs):
+
+            self.on_epoch_begin(epoch)
 
             self.epoch = epoch
 
@@ -446,7 +459,8 @@ class Learner(AttributeContainer):
     def train_for_epoch(self):
         """Trains pytorch model for one complete epoch"""
 
-        # empty list instead of np.full(len(self.train_loader), np.nan) because we can't determine len of generator datasets
+        # empty list instead of np.full(len(self.train_loader), np.nan) 
+        # because we can't determine len of generator datasets
         epoch_losses = {metric: [] for metric in self.to_monitor}
 
         # todo, it would be better to avoid reshaping/view at all
@@ -479,14 +493,14 @@ class Learner(AttributeContainer):
             self.optimizer.zero_grad()
 
             # calculate metrics for each mini-batch
-            er = RegressionMetrics(batch_y.detach().numpy(), pred_y.detach().numpy())
+            er = RegressionMetrics(batch_y.detach().cpu().numpy(), pred_y.detach().cpu().numpy())
 
             for loss in epoch_losses.keys():
                 epoch_losses[loss].append(getattr(er, loss)())
             # epoch_losses['mse'][i] = loss.detach()
 
-        # take the mean for all mini-batches without considering infinite values
-        self.train_epoch_losses = {k: round(float(np.mean(np.array(v)[np.isfinite(v)])), 4) for k, v in epoch_losses.items()}
+        # take the mean/median for all mini-batches without considering infinite values
+        self.train_epoch_losses = {k: round(float(self.avg_fn(np.array(v)[np.isfinite(v)])), 4) for k, v in epoch_losses.items()}
 
         return
 
@@ -513,7 +527,7 @@ class Learner(AttributeContainer):
                     epoch_losses[metric].append(getattr(er, metric)())
 
             # take the mean for all mini-batches
-            self.val_epoch_losses = {f'val_{k}': round(float(np.nanmean(v)), 4) for k, v in epoch_losses.items()}
+            self.val_epoch_losses = {f'val_{k}': round(float(self.avg_fn(v)), 4) for k, v in epoch_losses.items()}
 
             for k, v in self.val_epoch_losses.items():
                 metric = k.split('_')[1]
@@ -550,9 +564,10 @@ class Learner(AttributeContainer):
         if self.verbosity > 0:
             print("{}{}{}".format('*' * 25, 'Training Started', '*' * 25))
             formatter = "{:<7}" + " {:<15}" * (len(self.train_metrics) + len(self.val_metrics))
+
             print(formatter.format('Epoch: ',
                                    *self.train_metrics.keys(),
-                                   *self.train_metrics.keys()))
+                                   *self.val_metrics.keys()))
 
             print("{}".format('*' * 70))
         if hasattr(self.model, 'loss'):
@@ -659,7 +674,7 @@ class Learner(AttributeContainer):
 
         return
 
-    def on_epoch_begin(self):
+    def on_epoch_begin(self, epoch:int):
         return
 
     def on_epoch_end(self):
@@ -823,7 +838,7 @@ def get_metrics_to_monitor(metrics):
         _metrics = ['mse']
     elif isinstance(metrics, list):
 
-        _metrics = metrics + ['mse']
+        _metrics = ['mse'] + metrics
     else:
         assert isinstance(metrics, str)
         _metrics = ['mse', metrics]

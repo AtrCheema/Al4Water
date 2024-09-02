@@ -105,7 +105,6 @@ class TestLearner(unittest.TestCase):
         learner = make_learner()
         X, Y = get_xy()
 
-
         learner.fit(x=X,
                         y=Y,
                         callbacks = [{'after_epochs': 300, 'func': PlotStuff}]
@@ -153,7 +152,14 @@ class TestLearner(unittest.TestCase):
                                )
         X, Y = get_xy(in_features=2)
         _ = learner.fit(x=X, y=Y)
-        learner.stopped_early_ == 2
+        assert learner.stopped_early_ == 2
+        return
+    
+    def test_avg_func(self):
+        learner = make_learner(in_features=2, epochs=2,)
+        X, Y = get_xy(in_features=2)
+        learner.avg_fn = np.nanmedian
+        _ = learner.fit(x=X, y=Y)        
         return
 
     # def test_use_cuda(self):
