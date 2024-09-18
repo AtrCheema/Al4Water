@@ -1,3 +1,9 @@
+
+import warnings
+warnings.warn("""datasets module is deprecated. Please install water-datasets and import
+              corresponding dataset from there.""", UserWarning)
+
+
 from typing import Union
 
 from ai4water.backend import pd, os

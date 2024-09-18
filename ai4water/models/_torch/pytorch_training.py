@@ -6,14 +6,9 @@ from typing import Union, Tuple, List
 from SeqMetrics import RegressionMetrics
 
 from ai4water.backend import os, np, torch, pd
+from ai4water.backend import wandb
 from ai4water.postprocessing import ProcessPredictions
 from ai4water.utils.utils import dateandtime_now, find_best_weight
-
-try:
-    import wandb
-except ModuleNotFoundError:
-    wandb = None
-
 
 # only so that docs can be built without having torch to be installed
 try:
@@ -21,10 +16,7 @@ try:
 except ModuleNotFoundError:
     to_torch_dataset = None
 
-if torch is not None:
-    from .pytorch_attributes import LOSSES
-else:
-    LOSSES = {}
+from .pytorch_attributes import LOSSES, OPTIMIZERS
 
 
 F = {
@@ -50,8 +42,14 @@ F = {
 
 class AttributeContainer(object):
 
-    def __init__(self, num_epochs, to_monitor=None, use_cuda=None,
-                 path=None, verbosity=1):
+    def __init__(
+            self, 
+            num_epochs, 
+            to_monitor=None, 
+            use_cuda=None,
+            path=None, 
+            verbosity=1
+            ):
         self.to_monitor = get_metrics_to_monitor(to_monitor)
         self.num_epochs = num_epochs
 
@@ -89,7 +87,7 @@ class AttributeContainer(object):
         return self._optimizer
 
     @optimizer.setter
-    def optimizer(self, x):
+    def optimizer(self, x):        
         self._optimizer = x
 
     @property
@@ -153,14 +151,16 @@ class Learner(AttributeContainer):
                 mode of the model. It can be one of following
                     - 'regression'
                     - 'classification'
+                It is only used for postprocessing of predictions.
             to_monitor : List[str]
-                list of metrics to monitor
+                list of metrics to monitor. It can be any performance metric from
+                SeqMetrics
             wandb_config : dict
-                config for wandb
+                config for wandb. If given, it must contain at least ``project`` key.
             max_time : int
                 maximum time in hours for which to train the model. The training loop
                 will stop after this time.
-                This is useful when training on cloud and you want to stop the training
+                This is useful when you want to stop the training
                 after certain time.
             path : 
                 path to save results/weights
@@ -207,9 +207,13 @@ class Learner(AttributeContainer):
             >>> metrics = learner.evaluate(X, y=Y, metrics=['r2', 'nse', 'mape'])
             >>> t = learner.predict(X, y=Y, name='training')
         """
-        super().__init__(num_epochs, to_monitor, path=path,
-                         use_cuda=use_cuda,
-                         verbosity=verbosity)
+        super().__init__(
+            num_epochs, 
+            to_monitor, 
+            path=path,
+            use_cuda=use_cuda,
+            verbosity=verbosity
+            )
 
         if self.use_cuda:
             model = model.to(self._device())
@@ -521,7 +525,7 @@ class Learner(AttributeContainer):
                 batch_y, pred_y = self.eval(batch_x, batch_y)
 
                 # calculate metrics for each mini-batch  # todo : is detach.numpy expensive?
-                er = RegressionMetrics(batch_y.detach().numpy(), pred_y.detach().numpy())
+                er = RegressionMetrics(batch_y.detach().cpu().numpy(), pred_y.detach().cpu().numpy())
 
                 for metric in epoch_losses.keys():
                     epoch_losses[metric].append(getattr(er, metric)())
@@ -658,7 +662,7 @@ class Learner(AttributeContainer):
             kwargs = {}
             if not self.use_cuda:  # if the saved model was trained with cuda but we want to load it on cpu
                 kwargs['map_location'] = torch.device('cpu')            
-            self.model.load_state_dict(torch.load(weight_file_path))
+            self.model.load_state_dict(torch.load(weight_file_path, **kwargs))
             if self.verbosity > 0:
                 print("{} Successfully loaded weights from {} file {}".format('*' * 10, best_weights, '*' * 10))
         return
