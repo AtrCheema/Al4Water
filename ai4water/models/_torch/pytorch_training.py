@@ -17,27 +17,36 @@ except ModuleNotFoundError:
     to_torch_dataset = None
 
 from .pytorch_attributes import LOSSES, OPTIMIZERS
+from SeqMetrics.utils import METRIC_TYPES
 
 
-F = {
-    'mse': [np.nanmin, np.less],
-    'mae': [np.nanmin, np.less],
-    'nse': [np.nanmax, np.greater],
-    'nse_alpha': [np.nanmax, np.greater],
-    'nse_beta': [np.nanmax, np.greater],
-    'nse_mod': [np.nanmax, np.greater],
-    'nse_rel': [np.nanmax, np.greater],
-    'nse_bound': [np.nanmax, np.greater],
-    'r2': [np.nanmax, np.greater],
-    'pbias': [np.nanmin, np.less],
-    'mape': [np.nanmin, np.less],
-    'rmse': [np.nanmin, np.less],
-    'nrmse': [np.nanmin, np.less],
-    'kge': [np.nanmax, np.greater],
-    'kge_mod': [np.nanmax, np.greater],
-    'kge_bound': [np.nanmax, np.greater],
-    'kge_np': [np.nanmax, np.greater],
-}
+F = {}
+for k,v in METRIC_TYPES.items():
+    if v == "max":
+        F[k] = [np.nanmax, np.greater]
+    elif v == "min":
+        F[k] = [np.nanmin, np.less]
+    else:
+        raise ValueError(f"unknown metric type {v}")
+# F = {
+#     'mse': [np.nanmin, np.less],
+#     'mae': [np.nanmin, np.less],
+#     'nse': [np.nanmax, np.greater],
+#     'nse_alpha': [np.nanmax, np.greater],
+#     'nse_beta': [np.nanmax, np.greater],
+#     'nse_mod': [np.nanmax, np.greater],
+#     'nse_rel': [np.nanmax, np.greater],
+#     'nse_bound': [np.nanmax, np.greater],
+#     'r2': [np.nanmax, np.greater],
+#     'pbias': [np.nanmin, np.less],
+#     'mape': [np.nanmin, np.less],
+#     'rmse': [np.nanmin, np.less],
+#     'nrmse': [np.nanmin, np.less],
+#     'kge': [np.nanmax, np.greater],
+#     'kge_mod': [np.nanmax, np.greater],
+#     'kge_bound': [np.nanmax, np.greater],
+#     'kge_np': [np.nanmax, np.greater],
+# }
 
 
 class AttributeContainer(object):
@@ -374,10 +383,12 @@ class Learner(AttributeContainer):
             y=None,
             batch_size=None
     )->Tuple[np.ndarray, np.ndarray]:
-        loader, _ = self._get_loader(x=x, y=y, batch_size=batch_size, shuffle=False)
-        """prepares the loader from x,y and iterate over batches present
+        """
+        prepares the loader from x,y and iterate over batches present
         in loader. The results are concatenated as numpy array and returned as tuple
         """
+        loader, _ = self._get_loader(x=x, y=y, batch_size=batch_size, shuffle=False)
+
         true, pred = [], []
 
         for i, (batch_x, batch_y) in enumerate(loader):
@@ -477,6 +488,8 @@ class Learner(AttributeContainer):
 
         for i, (batch_x, batch_y) in enumerate(self.train_loader):
 
+            self.optimizer.zero_grad()
+            
             # todo, feeding batch_y to eval is only putting it on right device
             # can we do it before?
             batch_y, pred_y = self.eval(batch_x, batch_y)
@@ -494,14 +507,12 @@ class Learner(AttributeContainer):
             self.log_after_batch(i, batch_loss)
 
             self.optimizer.step()
-            self.optimizer.zero_grad()
 
             # calculate metrics for each mini-batch
             er = RegressionMetrics(batch_y.detach().cpu().numpy(), pred_y.detach().cpu().numpy())
 
             for loss in epoch_losses.keys():
                 epoch_losses[loss].append(getattr(er, loss)())
-            # epoch_losses['mse'][i] = loss.detach()
 
         # take the mean/median for all mini-batches without considering infinite values
         self.train_epoch_losses = {k: round(float(self.avg_fn(np.array(v)[np.isfinite(v)])), 4) for k, v in epoch_losses.items()}
@@ -644,7 +655,7 @@ class Learner(AttributeContainer):
         """
 
         if weight_file_path:
-            assert os.path.exists(weight_file_path)
+            assert os.path.exists(weight_file_path), f"{weight_file_path} does not exist"
             best_weights = os.path.basename(weight_file_path)
         else:
             w_path = getattr(self.model, 'w_path', self.path)
@@ -679,6 +690,7 @@ class Learner(AttributeContainer):
         return
 
     def on_epoch_begin(self, epoch:int):
+        """This function is called at the beginning of each epoch"""
         return
 
     def on_epoch_end(self):
